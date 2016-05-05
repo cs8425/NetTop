@@ -1,5 +1,5 @@
 # nettop
-a simple command line Bandwidth Monitor by parse `/proc/net/dev` to calculator.
+a simple command line Bandwidth Monitor by parsing `/proc/net/dev` to calculator.
 
 ## Build
 ```
@@ -20,6 +20,13 @@ Usage of nettop:
 
 ```
 
+## Output
+```
+$ ./nettop -i eth0 -t 1 -c 3
+BW:	eth0	66.00 B/s	66.00 B/s
+BW:	eth0	157.00 B/s	143.00 B/s
+BW:	eth0	163.00 B/s	224.00 B/s
+```
 
 ## LICENSE - MIT
 Copyright (C) 2016 cs8425
