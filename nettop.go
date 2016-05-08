@@ -120,6 +120,10 @@ func main() {
 
 	start := time.Now()
 	elapsed := time.Since(start)
+	if *Inter == "*" {
+		fmt.Printf("\033[0;0H                                                        \r")
+	}
+	fmt.Printf("iface\tRx\tTx\n")
 	for {
 
 		elapsed = time.Since(start)
@@ -141,9 +145,22 @@ func main() {
 			}
 		}
 		stat0 = stat1
+
+		multi := len(delta.Dev)
+		if multi > 1{
+			for i := 0; i< multi; i++{
+				fmt.Printf("\033[%d;0H                                                        \r", i)
+			}
+			fmt.Printf("\033[0;0Hiface\tRx\tTx\n")
+			fmt.Printf("\033[2;0H")
+		}
 		for _, iface := range delta.Dev {
 			stat := delta.Stat[iface]
-			fmt.Printf("BW:\t%v\t%v\t%v\n", iface, Vsize(stat.Rx, *T), Vsize(stat.Tx, *T))
+			if multi > 1 {
+				fmt.Printf("%v\t%v\t%v\n", iface, Vsize(stat.Rx, *T), Vsize(stat.Tx, *T))
+			}else{
+				fmt.Printf("\r%v\t%v\t%v", iface, Vsize(stat.Rx, *T), Vsize(stat.Tx, *T))
+			}
 		}
 		//elapsed := time.Since(start)
 		Vlogf(5, "[delta] %s", elapsed)
@@ -161,7 +178,7 @@ func main() {
 
 func Vsize(bytes uint64, delta float64) (ret string){
 	var tmp float64 = float64(bytes)/delta
-	var s string = ""
+	var s string = " "
 
 	bytes = uint64(tmp)
 
@@ -185,7 +202,7 @@ func Vsize(bytes uint64, delta float64) (ret string){
 		s = "T"
 
 	}
-	ret = fmt.Sprintf("%0.2f %sB/s", tmp, s)
+	ret = fmt.Sprintf("%06.2f %sB/s", tmp, s)
 	return
 }
 
