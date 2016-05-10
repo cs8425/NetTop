@@ -9,14 +9,14 @@ $ go build -o nettop nettop.go
 ## Usage
 ```
 Usage of nettop:
-  -c uint
-    	count (0 == unlimit)
-  -i string
-    	interface (default "*")
-  -t float
-    	update time(s) (default 2)
-  -v int
-    	verbosity (default 2)
+	-c uint
+		count (0 == unlimit)
+	-i string
+		interface (default "*")
+	-t float
+		update time(s) (default 2)
+	-v int
+		verbosity (default 2)
 
 ```
 
@@ -24,8 +24,6 @@ Usage of nettop:
 ```
 $ ./nettop -i eth0 -t 1 -c 3
 BW:	eth0	66.00 B/s	66.00 B/s
-BW:	eth0	157.00 B/s	143.00 B/s
-BW:	eth0	163.00 B/s	224.00 B/s
 ```
 
 ## LICENSE - MIT
