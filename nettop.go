@@ -1,17 +1,16 @@
 package main
 
 import (
-
-	"time"
-	"runtime"
 	"flag"
-	"log"
 	"fmt"
+	"log"
+	"runtime"
+	"time"
 
-	"os"
 	"bufio"
-	"strings"
+	"os"
 	"strconv"
+	"strings"
 )
 
 var T = flag.Float64("t", 2, "update time(s)")
@@ -21,14 +20,14 @@ var Inter = flag.String("i", "*", "interface")
 var verbosity = flag.Int("v", 2, "verbosity")
 
 type NetStat struct {
-	Dev []string
+	Dev  []string
 	Stat map[string]*DevStat
 }
 
 type DevStat struct {
-	Name  string
-	Rx    uint64
-	Tx    uint64
+	Name string
+	Rx   uint64
+	Tx   uint64
 }
 
 func ReadLines(filename string) ([]string, error) {
@@ -66,14 +65,14 @@ func getInfo() (ret NetStat) {
 		key := strings.TrimSpace(fields[0])
 		value := strings.Fields(strings.TrimSpace(fields[1]))
 
-//		Vlogln(5, key, value)
+		// Vlogln(5, key, value)
 
 		if *Inter != "*" && *Inter != key {
 			continue
 		}
 
 		c := new(DevStat)
-//		c := DevStat{}
+		// c := DevStat{}
 		c.Name = key
 		r, err := strconv.ParseInt(value[0], 10, 64)
 		if err != nil {
@@ -97,10 +96,10 @@ func getInfo() (ret NetStat) {
 }
 
 func main() {
-	log.SetFlags(log.Ldate|log.Ltime)
+	log.SetFlags(log.Ldate | log.Ltime)
 	flag.Parse()
 
-//	runtime.GOMAXPROCS(runtime.NumCPU())
+	// runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.GOMAXPROCS(1)
 
 	var stat0 NetStat
@@ -128,10 +127,10 @@ func main() {
 
 		elapsed = time.Since(start)
 		stat1 = getInfo()
-//		Vlogln(5, stat0)
+		// Vlogln(5, stat0)
 		for _, value := range stat1.Dev {
 			t0, ok := stat0.Stat[value]
-//			fmt.Println("k:", key, " v:", value, ok)
+			// fmt.Println("k:", key, " v:", value, ok)
 			if ok {
 				dev, ok := delta.Stat[value]
 				if !ok {
@@ -147,8 +146,8 @@ func main() {
 		stat0 = stat1
 
 		multi := len(delta.Dev)
-		if multi > 1{
-			for i := 0; i< multi; i++{
+		if multi > 1 {
+			for i := 0; i < multi; i++ {
 				fmt.Printf("\033[%d;0H                                                        \r", i)
 			}
 			fmt.Printf("\033[0;0Hiface\tRx\tTx\n")
@@ -158,11 +157,11 @@ func main() {
 			stat := delta.Stat[iface]
 			if multi > 1 {
 				fmt.Printf("%v\t%v\t%v\n", iface, Vsize(stat.Rx, *T), Vsize(stat.Tx, *T))
-			}else{
+			} else {
 				fmt.Printf("\r%v\t%v\t%v", iface, Vsize(stat.Rx, *T), Vsize(stat.Tx, *T))
 			}
 		}
-		//elapsed := time.Since(start)
+		// elapsed := time.Since(start)
 		Vlogf(5, "[delta] %s", elapsed)
 		start = time.Now()
 
@@ -171,13 +170,13 @@ func main() {
 			break
 		}
 
-		time.Sleep(time.Duration(*T * 1000) * time.Millisecond)
+		time.Sleep(time.Duration(*T*1000) * time.Millisecond)
 
 	}
 }
 
-func Vsize(bytes uint64, delta float64) (ret string){
-	var tmp float64 = float64(bytes)/delta
+func Vsize(bytes uint64, delta float64) (ret string) {
+	var tmp float64 = float64(bytes) / delta
 	var s string = " "
 
 	bytes = uint64(tmp)
@@ -186,19 +185,19 @@ func Vsize(bytes uint64, delta float64) (ret string){
 	case bytes < uint64(2<<9):
 
 	case bytes < uint64(2<<19):
-		tmp = tmp/float64(2<<9)
+		tmp = tmp / float64(2<<9)
 		s = "K"
 
 	case bytes < uint64(2<<29):
-		tmp = tmp/float64(2<<19)
+		tmp = tmp / float64(2<<19)
 		s = "M"
 
 	case bytes < uint64(2<<39):
-		tmp = tmp/float64(2<<29)
+		tmp = tmp / float64(2<<29)
 		s = "G"
 
 	case bytes < uint64(2<<49):
-		tmp = tmp/float64(2<<39)
+		tmp = tmp / float64(2<<39)
 		s = "T"
 
 	}
@@ -209,21 +208,15 @@ func Vsize(bytes uint64, delta float64) (ret string){
 func Vlogf(level int, format string, v ...interface{}) {
 	if level <= *verbosity {
 		log.Printf(format, v...)
-//		fmt.Printf(format, v...)
 	}
 }
 func Vlog(level int, v ...interface{}) {
 	if level <= *verbosity {
 		log.Print(v...)
-//		fmt.Print(v...)
 	}
 }
 func Vlogln(level int, v ...interface{}) {
 	if level <= *verbosity {
 		log.Println(v...)
-//		fmt.Println(v...)
 	}
 }
-
-
-
