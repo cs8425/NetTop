@@ -121,7 +121,7 @@ func main() {
 	start := time.Now()
 	elapsed := time.Since(start)
 	if *Inter == "*" {
-		fmt.Printf("\033[0;0H                                                        \r")
+		fmt.Printf("\033c")
 	}
 	fmt.Printf("iface\tRx\tTx\n")
 	for {
@@ -173,6 +173,9 @@ func main() {
 
 		time.Sleep(time.Duration(*T * 1000) * time.Millisecond)
 
+	}
+	if *Inter != "*" {
+		fmt.Println()
 	}
 }
 
