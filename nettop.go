@@ -120,9 +120,9 @@ func main() {
 	start := time.Now()
 	elapsed := time.Since(start)
 	if *Inter == "*" {
-		fmt.Printf("\033[0;0H                                                        \r")
+		fmt.Printf("\033c")
 	}
-	fmt.Printf("iface\tRx\tTx\n")
+	fmt.Printf("iface\t%-10s\tTx\n", "Rx")
 	for {
 
 		elapsed = time.Since(start)
@@ -150,7 +150,7 @@ func main() {
 			for i := 0; i < multi; i++ {
 				fmt.Printf("\033[%d;0H                                                        \r", i)
 			}
-			fmt.Printf("\033[0;0Hiface\tRx\tTx\n")
+			fmt.Printf("\033[0;0Hiface\t%-10s\tTx\n", "Rx")
 			fmt.Printf("\033[2;0H")
 		}
 		for _, iface := range delta.Dev {
@@ -172,6 +172,9 @@ func main() {
 
 		time.Sleep(time.Duration(*T*1000) * time.Millisecond)
 
+	}
+	if *Inter != "*" {
+		fmt.Println()
 	}
 }
 
