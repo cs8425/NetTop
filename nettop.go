@@ -22,19 +22,25 @@ var verbosity = flag.Int("v", 2, "verbosity")
 type NetTop struct {
 	delta *NetStat
 	last *NetStat
+	t0 time.Time
+	dt time.Duration
 	Interface string
 }
 func NewNetTop() *NetTop {
 	nt := &NetTop{
 		delta: NewNetStat(),
 		last: NewNetStat(),
+		t0: time.Now(),
+		dt: 1500 * time.Millisecond,
 		Interface: "*",
 	}
 	return nt
 }
 
-func (nt *NetTop) Update() {
+func (nt *NetTop) Update() (*NetStat, time.Duration) {
 	stat1 := nt.getInfo()
+	nt.dt = time.Since(nt.t0)
+
 	// Vlogln(5, nt.last)
 	for _, value := range stat1.Dev {
 		t0, ok := nt.last.Stat[value]
@@ -54,6 +60,9 @@ func (nt *NetTop) Update() {
 		dev.Tx = t1.Tx - t0.Tx
 	}
 	nt.last = &stat1
+	nt.t0 = time.Now()
+
+	return nt.delta, nt.dt
 }
 
 func (nt *NetTop) getInfo() (ret NetStat) {
@@ -168,8 +177,8 @@ func main() {
 
 		elapsed = time.Since(start)
 		// Vlogln(5, nettop)
-		nettop.Update()
-		delta := nettop.delta
+		delta, dt := nettop.Update()
+		dtf := dt.Seconds()
 
 		multi := len(delta.Dev)
 		if multi > 1 {
@@ -182,9 +191,9 @@ func main() {
 		for _, iface := range delta.Dev {
 			stat := delta.Stat[iface]
 			if multi > 1 {
-				fmt.Printf("%v\t%v\t%v\n", iface, Vsize(stat.Rx, *T), Vsize(stat.Tx, *T))
+				fmt.Printf("%v\t%v\t%v\n", iface, Vsize(stat.Rx, dtf), Vsize(stat.Tx, dtf))
 			} else {
-				fmt.Printf("\r%v\t%v\t%v", iface, Vsize(stat.Rx, *T), Vsize(stat.Tx, *T))
+				fmt.Printf("\r%v\t%v\t%v", iface, Vsize(stat.Rx, dtf), Vsize(stat.Tx, dtf))
 			}
 		}
 		// elapsed := time.Since(start)
