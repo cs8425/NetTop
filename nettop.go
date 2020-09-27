@@ -19,9 +19,98 @@ var Inter = flag.String("i", "*", "interface")
 
 var verbosity = flag.Int("v", 2, "verbosity")
 
+type NetTop struct {
+	delta *NetStat
+	last *NetStat
+	Interface string
+}
+func NewNetTop() *NetTop {
+	nt := &NetTop{
+		delta: NewNetStat(),
+		last: NewNetStat(),
+		Interface: "*",
+	}
+	return nt
+}
+
+func (nt *NetTop) Update() {
+	stat1 := nt.getInfo()
+	// Vlogln(5, nt.last)
+	for _, value := range stat1.Dev {
+		t0, ok := nt.last.Stat[value]
+		// fmt.Println("k:", key, " v:", value, ok)
+		if !ok {
+			continue
+		}
+
+		dev, ok := nt.delta.Stat[value]
+		if !ok {
+			nt.delta.Stat[value] = new(DevStat)
+			dev = nt.delta.Stat[value]
+			nt.delta.Dev = append(nt.delta.Dev, value)
+		}
+		t1 := stat1.Stat[value]
+		dev.Rx = t1.Rx - t0.Rx
+		dev.Tx = t1.Tx - t0.Tx
+	}
+	nt.last = &stat1
+}
+
+func (nt *NetTop) getInfo() (ret NetStat) {
+
+	lines, _ := ReadLines("/proc/net/dev")
+
+	ret.Dev = make([]string, 0)
+	ret.Stat = make(map[string]*DevStat)
+
+	for _, line := range lines {
+		fields := strings.Split(line, ":")
+		if len(fields) < 2 {
+			continue
+		}
+		key := strings.TrimSpace(fields[0])
+		value := strings.Fields(strings.TrimSpace(fields[1]))
+
+		// Vlogln(5, key, value)
+
+		if nt.Interface != "*" && nt.Interface != key {
+			continue
+		}
+
+		c := new(DevStat)
+		// c := DevStat{}
+		c.Name = key
+		r, err := strconv.ParseInt(value[0], 10, 64)
+		if err != nil {
+			Vlogln(4, key, "Rx", value[0], err)
+			break
+		}
+		c.Rx = uint64(r)
+
+		t, err := strconv.ParseInt(value[8], 10, 64)
+		if err != nil {
+			Vlogln(4, key, "Tx", value[8], err)
+			break
+		}
+		c.Tx = uint64(t)
+
+		ret.Dev = append(ret.Dev, key)
+		ret.Stat[key] = c
+	}
+
+	return
+}
+
+
 type NetStat struct {
 	Dev  []string
 	Stat map[string]*DevStat
+}
+func NewNetStat() *NetStat {
+	return &NetStat{
+		Dev: make([]string, 0),
+		Stat: make(map[string]*DevStat),
+	}
 }
 
 type DevStat struct {
@@ -50,51 +139,6 @@ func ReadLines(filename string) ([]string, error) {
 	return ret, nil
 }
 
-func getInfo() (ret NetStat) {
-
-	lines, _ := ReadLines("/proc/net/dev")
-
-	ret.Dev = make([]string, 0)
-	ret.Stat = make(map[string]*DevStat)
-
-	for _, line := range lines {
-		fields := strings.Split(line, ":")
-		if len(fields) < 2 {
-			continue
-		}
-		key := strings.TrimSpace(fields[0])
-		value := strings.Fields(strings.TrimSpace(fields[1]))
-
-		// Vlogln(5, key, value)
-
-		if *Inter != "*" && *Inter != key {
-			continue
-		}
-
-		c := new(DevStat)
-		// c := DevStat{}
-		c.Name = key
-		r, err := strconv.ParseInt(value[0], 10, 64)
-		if err != nil {
-			Vlogln(4, key, "Rx", value[0], err)
-			break
-		}
-		c.Rx = uint64(r)
-
-		t, err := strconv.ParseInt(value[8], 10, 64)
-		if err != nil {
-			Vlogln(4, key, "Tx", value[8], err)
-			break
-		}
-		c.Tx = uint64(t)
-
-		ret.Dev = append(ret.Dev, key)
-		ret.Stat[key] = c
-	}
-
-	return
-}
-
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime)
 	flag.Parse()
@@ -102,11 +146,8 @@ func main() {
 	// runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.GOMAXPROCS(1)
 
-	var stat0 NetStat
-	var stat1 NetStat
-	var delta NetStat
-	delta.Dev = make([]string, 0)
-	delta.Stat = make(map[string]*DevStat)
+	nettop := NewNetTop()
+	nettop.Interface = *Inter
 
 	i := *C
 	if i > 0 {
@@ -126,24 +167,9 @@ func main() {
 	for {
 
 		elapsed = time.Since(start)
-		stat1 = getInfo()
-		// Vlogln(5, stat0)
-		for _, value := range stat1.Dev {
-			t0, ok := stat0.Stat[value]
-			// fmt.Println("k:", key, " v:", value, ok)
-			if ok {
-				dev, ok := delta.Stat[value]
-				if !ok {
-					delta.Stat[value] = new(DevStat)
-					dev = delta.Stat[value]
-					delta.Dev = append(delta.Dev, value)
-				}
-				t1 := stat1.Stat[value]
-				dev.Rx = t1.Rx - t0.Rx
-				dev.Tx = t1.Tx - t0.Tx
-			}
-		}
-		stat0 = stat1
+		// Vlogln(5, nettop)
+		nettop.Update()
+		delta := nettop.delta
 
 		multi := len(delta.Dev)
 		if multi > 1 {
